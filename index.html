@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TikAuction V2 Prototype</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0d0f14;color:#f4f6fa;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:760px;margin:auto;padding:16px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+h1{font-size:22px;margin:0}.badge{font-size:12px;padding:6px 10px;border:1px solid #353b48;border-radius:999px;color:#aeb6c6}
+.card{background:#151820;border:1px solid #292f3b;border-radius:16px;padding:16px;margin:10px 0}
+label{display:block;color:#aeb6c6;font-size:12px;margin:9px 0 5px}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid #353b48;background:#0d1016;color:#fff;font-size:15px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+button{border:0;border-radius:10px;padding:12px;font-weight:700;background:#f4f6fa;color:#111;cursor:pointer}
+button.secondary{background:#2a2f39;color:#fff}button:disabled{opacity:.45}
+.hero{text-align:center;padding:22px 12px}.small{color:#9ea7b8;font-size:13px}.title{font-size:24px;font-weight:800;margin:8px}
+.timer{font-size:48px;font-weight:900}.points{font-size:28px;font-weight:800;margin:4px}
+.status{font-size:13px;color:#aeb6c6}.event{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #292f3b;font-size:14px}
+.event:last-child{border:0}.notice{font-size:12px;color:#929bad;line-height:1.5}
+@media(max-width:560px){.buttons{grid-template-columns:1fr 1fr}.timer{font-size:40px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><h1>🔨 TikAuction V2</h1><span class="badge">Prototype</span></div>
+
+<div class="card">
+<strong>🎵 TikTok LIVE</strong>
+<label>Username host</label>
+<input id="host" placeholder="@username_tiktok">
+<div class="buttons"><button id="connect">Hubungkan</button><button id="disconnect" class="secondary" disabled>Putuskan</button></div>
+<p class="status" id="conn">Belum terhubung. Mode simulator tersedia.</p>
+</div>
+
+<div class="card">
+<strong>⚙️ Aktivitas</strong>
+<label>Judul</label><input id="title" value="TikAuction V2">
+<div class="row">
+<div><label>Waktu (detik)</label><input id="duration" type="number" value="60" min="5"></div>
+<div><label>Extra time (detik)</label><input id="extra" type="number" value="10" min="0"></div>
+</div>
+<div class="buttons">
+<button id="start">▶ Mulai</button><button id="pause" class="secondary" disabled>Ⅱ Pause</button>
+<button id="reset" class="secondary">↻ Reset</button><button id="finish" class="secondary" disabled>■ Selesai</button>
+</div>
+</div>
+
+<div class="card hero">
+<div class="small" id="titleView">TikAuction V2</div>
+<div class="title">Live Activity</div>
+<div class="timer" id="timer">01:00</div>
+<div class="small">Extra Time: <b id="extraView">00:10</b></div>
+<hr style="border:0;border-top:1px solid #292f3b;margin:18px 0">
+<div class="points" id="points">0 poin virtual</div>
+<div class="status" id="activity">Menunggu aktivitas</div>
+</div>
+
+<div class="card"><strong>👥 Peserta</strong><div id="participants" class="status" style="margin-top:10px">Belum ada peserta</div></div>
+
+<div class="card">
+<strong>🧪 Simulator Event</strong>
+<p class="notice">Event hanya simulasi poin virtual untuk testing. Tidak memakai uang asli.</p>
+<div class="row"><input id="username" value="penonton01" placeholder="username"><input id="amount" type="number" value="10" min="1" placeholder="poin"></div>
+<div class="buttons"><button id="simulate">🎁 Simulasi Gift</button><button id="join" class="secondary">👤 Simulasi Join</button></div>
+</div>
+
+<div class="card"><strong>📡 Event Log</strong><div id="log" style="margin-top:8px"><div class="status">Belum ada event</div></div></div>
+</div>
+
+<script>
+let running=false,paused=false,left=60,timerId=null,total=0,connected=false;
+const $=id=>document.getElementById(id);
+const fmt=s=>String(Math.floor(Math.max(0,s)/60)).padStart(2,'0')+':'+String(Math.max(0,s)%60).padStart(2,'0');
+function render(){ $('timer').textContent=fmt(left); $('extraView').textContent=fmt(Number($('extra').value)||0); $('titleView').textContent=$('title').value||'TikAuction V2'; $('points').textContent=total.toLocaleString('id-ID')+' poin virtual';}
+function log(text){const d=document.createElement('div');d.className='event';d.innerHTML='<span>'+text+'</span><span>'+new Date().toLocaleTimeString()+'</span>';const b=$('log');if(b.firstElementChild&&b.firstElementChild.className==='status')b.innerHTML='';b.prepend(d)}
+function start(){if(running)return;running=true;paused=false;left=Number($('duration').value)||60;$('start').disabled=true;$('pause').disabled=false;$('finish').disabled=false;$('activity').textContent='🟢 Aktivitas berjalan';clearInterval(timerId);timerId=setInterval(()=>{if(!paused){left--;render();if(left<=0)finish()}},1000);render()}
+function pause(){if(!running)return;paused=!paused;$('pause').textContent=paused?'▶ Lanjut':'Ⅱ Pause';$('activity').textContent=paused?'⏸ Dijeda':'🟢 Aktivitas berjalan'}
+function finish(){if(!running)return;running=false;clearInterval(timerId);$('start').disabled=false;$('pause').disabled=true;$('finish').disabled=true;$('activity').textContent='🔴 Selesai';log('Aktivitas selesai')}
+function reset(){clearInterval(timerId);running=false;paused=false;left=Number($('duration').value)||60;total=0;$('start').disabled=false;$('pause').disabled=true;$('finish').disabled=true;$('pause').textContent='Ⅱ Pause';$('activity').textContent='Menunggu aktivitas';$('participants').textContent='Belum ada peserta';$('log').innerHTML='<div class="status">Belum ada event</div>';render()}
+function connect(){connected=true;$('connect').disabled=true;$('disconnect').disabled=false;$('conn').textContent='🟢 Mode simulator aktif — host: '+($('host').value||'belum diisi');log('Koneksi simulator aktif')}
+function disconnect(){connected=false;$('connect').disabled=false;$('disconnect').disabled=true;$('conn').textContent='Belum terhubung. Mode simulator tersedia.';log('Koneksi simulator diputus')}
+function participant(name){let p=document.createElement('div');p.className='event';p.innerHTML='<span>@'+name+'</span><span>peserta</span>';let b=$('participants');if(b.textContent.includes('Belum ada'))b.innerHTML='';b.prepend(p);log('@'+name+' bergabung')}
+function gift(){if(!connected){alert('Hubungkan mode simulator dulu.');return}let name=$('username').value.trim()||'penonton';let amount=Number($('amount').value)||0;if(amount<=0)return;total+=amount;render();participant(name);log('🎁 '+name+' +'+amount+' poin virtual')}
+$('connect').onclick=connect;$('disconnect').onclick=disconnect;$('start').onclick=start;$('pause').onclick=pause;$('finish').onclick=finish;$('reset').onclick=reset;$('simulate').onclick=gift;$('join').onclick=()=>participant($('username').value.trim()||'penonton');$('duration').onchange=()=>{if(!running){left=Number($('duration').value)||60;render()}};render();
+</script>
+</body>
+</html>

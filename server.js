@@ -1,0 +1,13 @@
+const express=require('express');
+const http=require('http');
+const path=require('path');
+const {Server}=require('socket.io');
+const app=express();
+const server=http.createServer(app);
+const io=new Server(server);
+app.use(express.json());
+app.use(express.static(path.join(__dirname,'public')));
+io.on('connection',socket=>socket.emit('v2:status',{ok:true,version:'2.0.0'}));
+app.get('/api/health',(req,res)=>res.json({ok:true,version:'2.0.0'}));
+const PORT=process.env.PORT||3000;
+server.listen(PORT,()=>console.log('TikAuction V2 running on port '+PORT));
